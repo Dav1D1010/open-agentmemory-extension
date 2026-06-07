@@ -24,7 +24,6 @@ These workflows are disjointed. Your local coding agent has no idea what archite
 **OpenAgentMemory** bridges this gap seamlessly. It runs a lightweight local daemon that captures your web-based LLM conversations in real-time and securely stores them. 
 
 3.  **Cross-Provider Context:** Start a conversation in ChatGPT, and the memory will automatically be available as context in Gemini, Claude, or Grok. Your local IDE agents (using the OpenAgent toolset) also share this exact same memory.
-4.  **Autonomous AI Search (Auto-Search):** Optionally allow the web AI models to autonomously query your local memory database when they need more historical context to answer your prompt. When enabled, a system instruction is injected that allows the model to output a `<SEARCH_MEMORY>` tag, which the extension intercepts, queries your local daemon, and seamlessly feeds the results back into the chat.
 
 ---
 

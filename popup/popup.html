@@ -32,9 +32,9 @@
   <!-- Offline Banner -->
   <div id="offline-banner" class="offline-banner hidden">
     <h3>Daemon is offline</h3>
-    <p>Please start your local AgentMemory daemon by running:</p>
+    <p>Please start your local AgentMemory daemon in your terminal. You can run the installed app or use npx:</p>
     <div class="code-block">
-      <code>npx @agentmemory/agentmemory</code>
+      <code>agentmemory</code>
       <button id="copy-cmd-btn" title="Copy to clipboard">📋</button>
     </div>
   </div>
@@ -105,51 +105,24 @@
       </div>
     </div>
 
-    <div class="settings-group">
-      <h3 class="settings-heading">
-        Auto-Search
-        <div class="tooltip-container">
-          <span class="tooltip-icon">🛈</span>
-          <div class="tooltip-text">Allows the AI to automatically query your local memory when it needs context. Warning: Search queries and results will be sent to the web app automatically.</div>
+      <div class="settings-group">
+        <h3 class="settings-heading">Misc</h3>
+        <div class="toggle-row">
+          <label class="toggle-label" for="show-notifications" style="cursor: default; text-decoration: none;">Show Save Notifications</label>
+          <label class="switch">
+            <input type="checkbox" id="show-notifications">
+            <span class="slider"></span>
+          </label>
         </div>
-      </h3>
-      <div class="toggle-row">
-        <a class="toggle-label" href="https://gemini.google.com" target="_blank" rel="noopener noreferrer">Gemini</a>
-        <label class="switch">
-          <input type="checkbox" id="gemini-search">
-          <span class="slider"></span>
-        </label>
       </div>
-      <div class="toggle-row">
-        <a class="toggle-label" href="https://chatgpt.com" target="_blank" rel="noopener noreferrer">ChatGPT</a>
-        <label class="switch">
-          <input type="checkbox" id="chatgpt-search">
-          <span class="slider"></span>
-        </label>
-      </div>
-      <div class="toggle-row">
-        <a class="toggle-label" href="https://claude.ai" target="_blank" rel="noopener noreferrer">Claude</a>
-        <label class="switch">
-          <input type="checkbox" id="claude-search">
-          <span class="slider"></span>
-        </label>
-      </div>
-      <div class="toggle-row">
-        <a class="toggle-label" href="https://grok.com" target="_blank" rel="noopener noreferrer">Grok</a>
-        <label class="switch">
-          <input type="checkbox" id="grok-search">
-          <span class="slider"></span>
-        </label>
-      </div>
-    </div>
 
-    <div class="settings-group">
-      <h3 class="settings-heading">API</h3>
-      <label class="field-label" for="api-url">AgentMemory URL</label>
-      <input type="text" id="api-url" class="text-input" value="http://localhost:3111">
-      <button id="save-settings" class="btn-save">Save & Reconnect</button>
+      <div class="settings-group">
+        <h3 class="settings-heading">API</h3>
+        <label class="field-label" for="api-url">AgentMemory URL</label>
+        <input type="text" id="api-url" class="text-input" value="http://localhost:3111">
+        <button id="save-settings" class="btn-save">Save & Reconnect</button>
+      </div>
     </div>
-  </div>
 
   <!-- Attach Bar — only shown when items are checked -->
   <div id="attach-bar" class="attach-bar hidden">

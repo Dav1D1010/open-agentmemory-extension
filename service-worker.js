@@ -23,6 +23,7 @@ async function getSettings() {
     chatgptAutoSearch: false,
     claudeAutoSearch: false,
     grokAutoSearch: false,
+    showNotifications: false,
   };
   const stored = await chrome.storage.local.get(Object.keys(defaults));
   return { ...defaults, ...stored };
@@ -107,7 +108,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             timestamp: new Date().toISOString(),
             data: { prompt: message.content },
           });
-          sendResponse(result);
+          sendResponse({ ...result, showToast: settings.showNotifications });
           return;
         }
 

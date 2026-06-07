@@ -9,19 +9,13 @@ const OAM = (() => {
   const MAX_CONTENT_LENGTH = 32000;
   const CONTEXT_HEADER = '---\n[AgentMemory Context — selected from past sessions]\n---\n';
   const CONTEXT_FOOTER = '\n---\n[End AgentMemory Context]\n---\n\n';
-  
-  const SEARCH_INSTRUCTION = `
-[AgentMemory System Instruction]: You have access to the user's local "AgentMemory" database containing their past conversations, architecture decisions, and code snippets across all platforms (Gemini, ChatGPT, Claude, and local IDEs). If you need more historical context to answer the user's prompt, output exactly: <SEARCH_MEMORY>your query</SEARCH_MEMORY>. The system will intercept this, query the database, and auto-reply with the results so you can continue.
-`;
 
   let _sessionId = `web_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`;
   let _platform = 'unknown';
   let _observedMessages = new Set();
   let _debounceTimer = null;
 
-  let _autoSearchEnabled = false;
-  let _hasInjectedInstructions = false;
-  let _isSearching = false;
+  let _showNotifications = true;
 
   // ---------------------------------------------------------------------------
   // Queued context — synced from chrome.storage.session
@@ -42,22 +36,29 @@ const OAM = (() => {
           removeContextBanner();
         }
       }
+      
+      // Also listen for settings changes without requiring a page reload
+      if (area === 'local') {
+        const key = `${_platform}AutoSearch`;
+        if (key in changes) {
+          _autoSearchEnabled = changes[key].newValue === true;
+        }
+        if ('showNotifications' in changes) {
+          _showNotifications = changes.showNotifications.newValue === true;
+        }
+      }
     });
 
     // Load auto-search settings
     chrome.runtime.sendMessage({ type: 'GET_SETTINGS' }, (s) => {
       if (s) {
-        if (_platform === 'gemini') _autoSearchEnabled = s.geminiAutoSearch === true;
-        if (_platform === 'chatgpt') _autoSearchEnabled = s.chatgptAutoSearch === true;
-        if (_platform === 'claude') _autoSearchEnabled = s.claudeAutoSearch === true;
+        if (s.showNotifications !== undefined) _showNotifications = s.showNotifications === true;
       }
     });
   }
 
   function getQueuedContext() {
-    if (_queuedContext) return _queuedContext;
-    if (_autoSearchEnabled && !_hasInjectedInstructions) return 'INJECT_INSTRUCTIONS_ONLY';
-    return null;
+    return _queuedContext;
   }
 
   function clearQueuedContext() {
@@ -65,9 +66,6 @@ const OAM = (() => {
     chrome.storage.session.remove('oamQueuedContext');
     removeContextBanner();
     chrome.runtime.sendMessage({ type: 'CONTEXT_SENT' });
-    if (_autoSearchEnabled) {
-      _hasInjectedInstructions = true;
-    }
   }
 
   // ---------------------------------------------------------------------------
@@ -115,9 +113,6 @@ const OAM = (() => {
     } else {
       if (_queuedContext) {
         fullContext += CONTEXT_HEADER + _queuedContext + CONTEXT_FOOTER;
-      }
-      if (_autoSearchEnabled && !_hasInjectedInstructions) {
-        fullContext += SEARCH_INSTRUCTION;
       }
     }
 
@@ -181,13 +176,13 @@ const OAM = (() => {
       type: 'OBSERVE', platform: _platform, sessionId: _sessionId, content,
     });
 
-    if (result && !result.error && !result.skipped) {
+    if (result && !result.error && !result.skipped && result.showToast) {
       showToast('💾 Saved to memory');
     }
   }
 
   // ---------------------------------------------------------------------------
-  // DOM observation & Auto-Search Intercept
+  // DOM observation
   // ---------------------------------------------------------------------------
 
   function observeDOM(containerSelector, messageExtractor) {
@@ -199,8 +194,6 @@ const OAM = (() => {
       }
 
       const observer = new MutationObserver(() => {
-        if (_autoSearchEnabled) checkForSearchMemory(container);
-
         clearTimeout(_debounceTimer);
         _debounceTimer = setTimeout(() => {
           const pairs = messageExtractor();
@@ -222,74 +215,13 @@ const OAM = (() => {
     tryAttach();
   }
 
-  function checkForSearchMemory(container) {
-    if (_isSearching) return;
-    if (!container.innerText.includes('<SEARCH_MEMORY>')) return;
-
-    const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, null, false);
-    let node;
-    while ((node = walker.nextNode())) {
-      if (node.nodeValue.includes('<SEARCH_MEMORY>')) {
-        const text = node.nodeValue;
-        const match = text.match(/<SEARCH_MEMORY>(.*?)<\/SEARCH_MEMORY>/);
-        if (match) {
-          const query = match[1].trim();
-          // Find closest container block to hide
-          let elementToHide = node.parentElement;
-          while (elementToHide && elementToHide.tagName !== 'DIV' && elementToHide.tagName !== 'P') {
-            elementToHide = elementToHide.parentElement;
-          }
-          if (!elementToHide) elementToHide = node.parentElement;
-          
-          executeAutoSearch(query, elementToHide);
-          return;
-        }
-      }
-    }
-  }
-
-  async function executeAutoSearch(query, elementToHide) {
-    _isSearching = true;
-
-    // Visual masking
-    elementToHide.style.display = 'none';
-    const badge = document.createElement('div');
-    badge.innerHTML = '🔍 <em>Searching local memory for: "' + query + '"...</em>';
-    Object.assign(badge.style, {
-      color: '#888', padding: '8px', fontFamily: 'monospace',
-      backgroundColor: 'rgba(0,0,0,0.05)', borderRadius: '4px', margin: '8px 0'
-    });
-    elementToHide.parentNode.insertBefore(badge, elementToHide);
-
-    // Fetch
-    const r = await sendToBackground({ type: 'SEARCH', query, limit: 5 });
-    
-    // Format
-    let resultsText = `[AgentMemory Search Results for "${query}"]\n`;
-    if (!r || r.error || !r.results || r.results.length === 0) {
-      resultsText += "No matching memories found in the local database.\n";
-    } else {
-      r.results.forEach(item => {
-        const obs = item.observation || item;
-        resultsText += `- ${obs.title || obs.subtitle || 'Memory'}: ${obs.narrative || obs.facts?.join('; ') || ''}\n`;
-      });
-    }
-
-    // Auto-Reply
-    if (typeof OAM.executeAutoReply === 'function') {
-      OAM.executeAutoReply(resultsText);
-    } else {
-      console.error('OAM.executeAutoReply is not implemented by the platform script.');
-    }
-
-    setTimeout(() => { _isSearching = false; }, 5000);
-  }
-
   // ---------------------------------------------------------------------------
   // Toast
   // ---------------------------------------------------------------------------
 
   function showToast(message) {
+    if (!_showNotifications) return;
+
     const existing = document.getElementById('oam-toast');
     if (existing) existing.remove();
 
