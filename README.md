@@ -56,4 +56,4 @@ That's it! Open Gemini or ChatGPT and you'll see OpenAgentMemory silently enhanc
 
 ## 🔒 Privacy & Security
 
-Your code and conversation history never touch our servers. Everything is processed locally between your browser and the Node.js daemon running securely on `localhost:3111`.
+Your code and conversation history are never shared. Everything is processed locally between your browser and the Node.js daemon running securely on `localhost:3111`.
