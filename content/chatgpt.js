@@ -127,6 +127,26 @@
   }
 
   // ---------------------------------------------------------------------------
+  // Auto-Search Reply Injection
+  // ---------------------------------------------------------------------------
+
+  OAM.executeAutoReply = (text) => {
+    const input = qs(INPUT_SELECTORS);
+    if (!input) return;
+    
+    OAM.prependContextToInput(input, text, true);
+    
+    setTimeout(() => {
+      const btn = qs(SEND_BTN_SELECTORS);
+      if (btn && !btn.disabled) {
+        btn.click();
+      } else {
+        input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
+      }
+    }, 300);
+  };
+
+  // ---------------------------------------------------------------------------
   // SPA navigation
   // ---------------------------------------------------------------------------
 

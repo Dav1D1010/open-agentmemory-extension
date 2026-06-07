@@ -22,6 +22,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   const recentResults  = document.getElementById('recent-results');
   const geminiSave     = document.getElementById('gemini-save');
   const chatgptSave    = document.getElementById('chatgpt-save');
+  const claudeSave     = document.getElementById('claude-save');
+  const grokSave       = document.getElementById('grok-save');
+  const geminiSearch   = document.getElementById('gemini-search');
+  const chatgptSearch  = document.getElementById('chatgpt-search');
+  const claudeSearch   = document.getElementById('claude-search');
+  const grokSearch     = document.getElementById('grok-search');
   const apiUrlInput    = document.getElementById('api-url');
   const saveSettingsBtn= document.getElementById('save-settings');
   const attachBar      = document.getElementById('attach-bar');
@@ -76,16 +82,28 @@ document.addEventListener('DOMContentLoaded', async () => {
   async function loadSettings() {
     const s = await msg({ type: 'GET_SETTINGS' });
     if (!s) return;
+    apiUrlInput.value   = s.apiUrl || 'http://localhost:3111';
     geminiSave.checked  = s.geminiAutoSave  !== false;
     chatgptSave.checked = s.chatgptAutoSave !== false;
-    const url = s.apiUrl || 'http://localhost:3111';
-    apiUrlInput.value   = url;
+    claudeSave.checked  = s.claudeAutoSave  !== false;
+    grokSave.checked    = s.grokAutoSave    !== false;
+    geminiSearch.checked = s.geminiAutoSearch === true;
+    chatgptSearch.checked = s.chatgptAutoSearch === true;
+    claudeSearch.checked = s.claudeAutoSearch === true;
+    grokSearch.checked   = s.grokAutoSearch === true;
+    const url = apiUrlInput.value;
     apiUrlDisplay.textContent = url.replace(/^https?:\/\//, '');
     if (dashboardLink) dashboardLink.href = url.replace(/:\d+\/?$/, ':3113/');
   }
 
   geminiSave.addEventListener('change',  () => msg({ type: 'SET_SETTINGS', settings: { geminiAutoSave:  geminiSave.checked  } }));
   chatgptSave.addEventListener('change', () => msg({ type: 'SET_SETTINGS', settings: { chatgptAutoSave: chatgptSave.checked } }));
+  claudeSave.addEventListener('change',  () => msg({ type: 'SET_SETTINGS', settings: { claudeAutoSave:  claudeSave.checked  } }));
+  grokSave.addEventListener('change',    () => msg({ type: 'SET_SETTINGS', settings: { grokAutoSave:    grokSave.checked    } }));
+  geminiSearch.addEventListener('change',  () => msg({ type: 'SET_SETTINGS', settings: { geminiAutoSearch:  geminiSearch.checked  } }));
+  chatgptSearch.addEventListener('change', () => msg({ type: 'SET_SETTINGS', settings: { chatgptAutoSearch: chatgptSearch.checked } }));
+  claudeSearch.addEventListener('change',  () => msg({ type: 'SET_SETTINGS', settings: { claudeAutoSearch:  claudeSearch.checked  } }));
+  grokSearch.addEventListener('change',    () => msg({ type: 'SET_SETTINGS', settings: { grokAutoSearch:    grokSearch.checked    } }));
 
   saveSettingsBtn.addEventListener('click', async () => {
     const url = apiUrlInput.value.trim().replace(/\/+$/, '');

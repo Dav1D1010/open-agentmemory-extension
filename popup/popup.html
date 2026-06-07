@@ -51,7 +51,7 @@
 
   <!-- Tab Navigation -->
   <div class="tabs">
-    <button class="tab active" data-tab="search">Search Memory</button>
+    <button class="tab active" data-tab="search">Search</button>
     <button class="tab" data-tab="recent">Recent</button>
     <button class="tab" data-tab="settings">Settings</button>
   </div>
@@ -76,16 +76,68 @@
     <div class="settings-group">
       <h3 class="settings-heading">Auto-save</h3>
       <div class="toggle-row">
-        <label class="toggle-label" for="gemini-save">Gemini Web</label>
+        <a class="toggle-label" href="https://gemini.google.com" target="_blank" rel="noopener noreferrer">Gemini</a>
         <label class="switch">
           <input type="checkbox" id="gemini-save" checked>
           <span class="slider"></span>
         </label>
       </div>
       <div class="toggle-row">
-        <label class="toggle-label" for="chatgpt-save">ChatGPT</label>
+        <a class="toggle-label" href="https://chatgpt.com" target="_blank" rel="noopener noreferrer">ChatGPT</a>
         <label class="switch">
           <input type="checkbox" id="chatgpt-save" checked>
+          <span class="slider"></span>
+        </label>
+      </div>
+      <div class="toggle-row">
+        <a class="toggle-label" href="https://claude.ai" target="_blank" rel="noopener noreferrer">Claude</a>
+        <label class="switch">
+          <input type="checkbox" id="claude-save" checked>
+          <span class="slider"></span>
+        </label>
+      </div>
+      <div class="toggle-row">
+        <a class="toggle-label" href="https://grok.com" target="_blank" rel="noopener noreferrer">Grok</a>
+        <label class="switch">
+          <input type="checkbox" id="grok-save" checked>
+          <span class="slider"></span>
+        </label>
+      </div>
+    </div>
+
+    <div class="settings-group">
+      <h3 class="settings-heading">
+        Auto-Search
+        <div class="tooltip-container">
+          <span class="tooltip-icon">🛈</span>
+          <div class="tooltip-text">Allows the AI to automatically query your local memory when it needs context. Warning: Search queries and results will be sent to the web app automatically.</div>
+        </div>
+      </h3>
+      <div class="toggle-row">
+        <a class="toggle-label" href="https://gemini.google.com" target="_blank" rel="noopener noreferrer">Gemini</a>
+        <label class="switch">
+          <input type="checkbox" id="gemini-search">
+          <span class="slider"></span>
+        </label>
+      </div>
+      <div class="toggle-row">
+        <a class="toggle-label" href="https://chatgpt.com" target="_blank" rel="noopener noreferrer">ChatGPT</a>
+        <label class="switch">
+          <input type="checkbox" id="chatgpt-search">
+          <span class="slider"></span>
+        </label>
+      </div>
+      <div class="toggle-row">
+        <a class="toggle-label" href="https://claude.ai" target="_blank" rel="noopener noreferrer">Claude</a>
+        <label class="switch">
+          <input type="checkbox" id="claude-search">
+          <span class="slider"></span>
+        </label>
+      </div>
+      <div class="toggle-row">
+        <a class="toggle-label" href="https://grok.com" target="_blank" rel="noopener noreferrer">Grok</a>
+        <label class="switch">
+          <input type="checkbox" id="grok-search">
           <span class="slider"></span>
         </label>
       </div>

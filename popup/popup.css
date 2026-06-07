@@ -374,7 +374,8 @@ body {
   padding: 5px 0;
 }
 
-.toggle-label { font-size: 13px; color: #52525b; cursor: pointer; }
+.toggle-label { font-size: 13px; color: #52525b; cursor: pointer; text-decoration: none; transition: color 0.2s; }
+.toggle-label:hover { color: #8b5cf6; }
 
 .switch { position: relative; display: inline-block; width: 36px; height: 19px; flex-shrink: 0; }
 .switch input { opacity: 0; width: 0; height: 0; }
@@ -483,4 +484,66 @@ input:checked + .slider::before {
   color: #52525b;
   border-color: #e4e4e7;
   cursor: default;
+}
+
+/* Tooltip Styles */
+.tooltip-container {
+  display: inline-block;
+  position: relative;
+  margin-left: 6px;
+  cursor: help;
+}
+
+.tooltip-icon {
+  font-size: 14px;
+  color: #71717a;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  width: 14px;
+  height: 14px;
+  line-height: 1;
+}
+
+.tooltip-container:hover .tooltip-icon {
+  color: #e4e4e7;
+}
+
+.tooltip-text {
+  visibility: hidden;
+  width: 220px;
+  background-color: #27272a;
+  color: #d4d4d8;
+  text-align: left;
+  border-radius: 6px;
+  padding: 8px 12px;
+  position: absolute;
+  z-index: 100;
+  bottom: 125%;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 1.4;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+  border: 1px solid #3f3f46;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.tooltip-text::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: #3f3f46 transparent transparent transparent;
+}
+
+.tooltip-container:hover .tooltip-text {
+  visibility: visible;
+  opacity: 1;
 }

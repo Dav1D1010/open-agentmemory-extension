@@ -1,5 +1,5 @@
 // =============================================================================
-// Open AgentMemory — Gemini Web Content Script
+// Open AgentMemory — Grok Web Content Script
 // =============================================================================
 
 /* global OAM */
@@ -7,45 +7,43 @@
 (() => {
   'use strict';
 
-  OAM.platform = 'gemini';
+  OAM.platform = 'grok';
   OAM.startSession();
-  OAM.initQueueListener(); // Start listening for queued context from popup
+  OAM.initQueueListener();
 
   // ---------------------------------------------------------------------------
-  // Selectors — multiple fallbacks for Gemini's evolving DOM
+  // Selectors
   // ---------------------------------------------------------------------------
 
   const CONVERSATION_SELECTORS = [
-    '.conversation-container',
     'main',
-    '[role="main"]',
+    '.grok-chat',
+    '[data-testid="conversation"]',
+    'body' // fallback
   ];
 
   const USER_MSG_SELECTORS = [
-    '.user-query',
-    '[data-message-author-role="user"]',
-    '.query-text',
+    '.user-message',
+    '[data-testid="user-message"]',
+    '.message.user'
   ];
 
   const AI_MSG_SELECTORS = [
-    '.model-response-text',
-    '.response-container-content',
-    '[data-message-author-role="model"]',
-    '.markdown-main-panel',
+    '.grok-message',
+    '[data-testid="grok-message"]',
+    '.message.assistant'
   ];
 
   const INPUT_SELECTORS = [
-    '.ql-editor[contenteditable]',
-    '[contenteditable="true"][aria-label*="message"]',
-    '[contenteditable="true"]',
+    'textarea[placeholder*="Ask Grok"]',
     'textarea',
+    '[contenteditable="true"]'
   ];
 
   const SEND_BTN_SELECTORS = [
-    'button[aria-label="Send message"]',
-    '.send-button',
-    'button[data-test-id="send-button"]',
+    'button[aria-label="Grok"]',
     'button[aria-label*="Send"]',
+    'button[type="submit"]'
   ];
 
   // ---------------------------------------------------------------------------
@@ -82,12 +80,12 @@
   }
 
   // ---------------------------------------------------------------------------
-  // Send interception — synchronous context prepend
+  // Send interception
   // ---------------------------------------------------------------------------
 
   function handleSend() {
     const queued = OAM.getQueuedContext();
-    if (!queued) return; // Nothing queued — don't touch the input
+    if (!queued) return;
 
     const input = qs(INPUT_SELECTORS);
     if (!input) return;
@@ -123,10 +121,8 @@
         }, { capture: true });
       }
 
-      // Re-check periodically in case DOM rebuilds
       setTimeout(tryHook, 5000);
     }
-
     tryHook();
   }
 
@@ -145,6 +141,7 @@
       if (btn && !btn.disabled) {
         btn.click();
       } else {
+        // Fallback: dispatch enter
         input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
       }
     }, 300);

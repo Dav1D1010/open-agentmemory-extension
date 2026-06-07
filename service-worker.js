@@ -17,6 +17,12 @@ async function getSettings() {
     apiUrl: DEFAULT_API_URL,
     geminiAutoSave: true,
     chatgptAutoSave: true,
+    claudeAutoSave: true,
+    grokAutoSave: true,
+    geminiAutoSearch: false,
+    chatgptAutoSearch: false,
+    claudeAutoSearch: false,
+    grokAutoSearch: false,
   };
   const stored = await chrome.storage.local.get(Object.keys(defaults));
   return { ...defaults, ...stored };
@@ -90,6 +96,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
           if (platform === 'gemini' && !settings.geminiAutoSave) { sendResponse({ skipped: true }); return; }
           if (platform === 'chatgpt' && !settings.chatgptAutoSave) { sendResponse({ skipped: true }); return; }
+          if (platform === 'claude' && !settings.claudeAutoSave) { sendResponse({ skipped: true }); return; }
+          if (platform === 'grok' && !settings.grokAutoSave) { sendResponse({ skipped: true }); return; }
 
           const result = await apiPost('observe', {
             hookType: 'prompt_submit',

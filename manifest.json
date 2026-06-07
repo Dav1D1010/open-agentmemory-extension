@@ -45,6 +45,26 @@
         "content/chatgpt.js"
       ],
       "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "https://claude.ai/*"
+      ],
+      "js": [
+        "content/shared.js",
+        "content/claude.js"
+      ],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "https://grok.com/*"
+      ],
+      "js": [
+        "content/shared.js",
+        "content/grok.js"
+      ],
+      "run_at": "document_idle"
     }
   ],
   "icons": {

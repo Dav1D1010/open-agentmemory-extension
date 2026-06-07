@@ -1,5 +1,5 @@
 // =============================================================================
-// Open AgentMemory — Gemini Web Content Script
+// Open AgentMemory — Claude Content Script
 // =============================================================================
 
 /* global OAM */
@@ -7,45 +7,41 @@
 (() => {
   'use strict';
 
-  OAM.platform = 'gemini';
+  OAM.platform = 'claude';
   OAM.startSession();
-  OAM.initQueueListener(); // Start listening for queued context from popup
+  OAM.initQueueListener();
 
   // ---------------------------------------------------------------------------
-  // Selectors — multiple fallbacks for Gemini's evolving DOM
+  // Selectors
   // ---------------------------------------------------------------------------
 
   const CONVERSATION_SELECTORS = [
-    '.conversation-container',
-    'main',
-    '[role="main"]',
+    '.ReactVirtualized__Grid',
+    'div[data-scrollable="true"]',
+    'main'
   ];
 
   const USER_MSG_SELECTORS = [
-    '.user-query',
-    '[data-message-author-role="user"]',
-    '.query-text',
+    '.font-user-message',
+    '[data-is-user="true"]',
+    '.grid-cols-1 > div:nth-child(odd)' // basic fallback
   ];
 
   const AI_MSG_SELECTORS = [
-    '.model-response-text',
-    '.response-container-content',
-    '[data-message-author-role="model"]',
-    '.markdown-main-panel',
+    '.font-claude-message',
+    '[data-is-user="false"]',
+    '.grid-cols-1 > div:nth-child(even)' // basic fallback
   ];
 
   const INPUT_SELECTORS = [
-    '.ql-editor[contenteditable]',
-    '[contenteditable="true"][aria-label*="message"]',
-    '[contenteditable="true"]',
-    'textarea',
+    'div[contenteditable="true"]',
+    '.ProseMirror'
   ];
 
   const SEND_BTN_SELECTORS = [
-    'button[aria-label="Send message"]',
-    '.send-button',
-    'button[data-test-id="send-button"]',
-    'button[aria-label*="Send"]',
+    'button[aria-label="Send Message"]',
+    'button[aria-label="Send"]',
+    'form button'
   ];
 
   // ---------------------------------------------------------------------------
@@ -87,7 +83,7 @@
 
   function handleSend() {
     const queued = OAM.getQueuedContext();
-    if (!queued) return; // Nothing queued — don't touch the input
+    if (!queued) return;
 
     const input = qs(INPUT_SELECTORS);
     if (!input) return;
@@ -123,7 +119,6 @@
         }, { capture: true });
       }
 
-      // Re-check periodically in case DOM rebuilds
       setTimeout(tryHook, 5000);
     }
 

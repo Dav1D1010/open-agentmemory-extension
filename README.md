@@ -23,7 +23,8 @@ These workflows are disjointed. Your local coding agent has no idea what archite
 **The Solution:**
 **OpenAgentMemory** bridges this gap seamlessly. It runs a lightweight local daemon that captures your web-based LLM conversations in real-time and securely stores them. 
 
-When you ideate in the browser, that knowledge is instantly synced to your local personal memory. When you switch to your desktop coding agent, it can automatically query your `agentmemory` daemon to retrieve the exact context, decisions, and code generated during your web session. It acts as a unified "second brain" for all your AI tools.
+3.  **Cross-Provider Context:** Start a conversation in ChatGPT, and the memory will automatically be available as context in Gemini, Claude, or Grok. Your local IDE agents (using the OpenAgent toolset) also share this exact same memory.
+4.  **Autonomous AI Search (Auto-Search):** Optionally allow the web AI models to autonomously query your local memory database when they need more historical context to answer your prompt. When enabled, a system instruction is injected that allows the model to output a `<SEARCH_MEMORY>` tag, which the extension intercepts, queries your local daemon, and seamlessly feeds the results back into the chat.
 
 ---
 
@@ -54,6 +55,13 @@ That's it! Open Gemini or ChatGPT, and you'll see OpenAgentMemory silently synci
 - **Lightweight & Fast:** Synchronous background execution that doesn't slow down your browsing.
 - **Minimalist Popup:** A beautifully designed light-theme popup lets you quickly toggle memory syncing on and off.
 - **Cross-Platform:** Built on standard web technologies and Node.js. Runs flawlessly on Windows, macOS, and Linux.
+
+## 🌐 Supported Web Interfaces
+
+*   **ChatGPT** (`chatgpt.com`, `chat.openai.com`)
+*   **Gemini** (`gemini.google.com`)
+*   **Claude** (`claude.ai`)
+*   **Grok** (`grok.com`)
 
 ---
 
