@@ -5,6 +5,8 @@
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
+.hidden { display: none !important; }
+
 html {
   overflow: hidden;
 }
@@ -291,6 +293,7 @@ body {
 }
 
 .result-card:hover { border-color: #a1a1aa; background: #fafafa; }
+.result-card:focus-visible { outline: 2px solid #6366f1; outline-offset: 1px; }
 
 .result-card.selected {
   border-color: #18181b;
@@ -376,6 +379,8 @@ body {
 
 .toggle-label { font-size: 13px; color: #52525b; cursor: pointer; text-decoration: none; transition: color 0.2s; }
 .toggle-label:hover { color: #8b5cf6; }
+.toggle-label.static-label { cursor: default; }
+.toggle-label.static-label:hover { color: #52525b; }
 
 .switch { position: relative; display: inline-block; width: 36px; height: 19px; flex-shrink: 0; }
 .switch input { opacity: 0; width: 0; height: 0; }
@@ -424,6 +429,13 @@ input:checked + .slider::before {
   margin-bottom: 8px;
 }
 .text-input:focus { border-color: #a1a1aa; box-shadow: 0 0 0 2px rgba(228,228,231,0.5); }
+
+.settings-error {
+  margin: -2px 0 8px;
+  color: #dc2626;
+  font-size: 11px;
+  line-height: 1.35;
+}
 
 .btn-save {
   width: 100%;

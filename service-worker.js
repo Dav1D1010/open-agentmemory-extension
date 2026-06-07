@@ -4,8 +4,6 @@
 // =============================================================================
 
 const DEFAULT_API_URL = 'http://localhost:3111';
-
-let _badgeCount = 0;
 let _isConnected = false;
 
 // ---------------------------------------------------------------------------
@@ -15,18 +13,26 @@ let _isConnected = false;
 async function getSettings() {
   const defaults = {
     apiUrl: DEFAULT_API_URL,
+    secret: '',
     geminiAutoSave: true,
     chatgptAutoSave: true,
     claudeAutoSave: true,
     grokAutoSave: true,
-    geminiAutoSearch: false,
-    chatgptAutoSearch: false,
-    claudeAutoSearch: false,
-    grokAutoSearch: false,
     showNotifications: false,
   };
   const stored = await chrome.storage.local.get(Object.keys(defaults));
   return { ...defaults, ...stored };
+}
+
+function normalizeApiUrl(value) {
+  const url = new URL(String(value || '').trim());
+  const isLoopback = url.hostname === 'localhost' || url.hostname === '127.0.0.1';
+
+  if (url.protocol !== 'http:' || !isLoopback || url.username || url.password) {
+    throw new Error('AgentMemory URL must be an http://localhost or http://127.0.0.1 address');
+  }
+
+  return url.origin;
 }
 
 function authHeaders(secret) {
@@ -35,21 +41,40 @@ function authHeaders(secret) {
   return h;
 }
 
-async function apiPost(endpoint, body) {
+async function apiRequest(endpoint, { method = 'POST', body, timeout = 10000 } = {}) {
   const settings = await getSettings();
-  const url = `${settings.apiUrl}/agentmemory/${endpoint}`;
+  let apiUrl;
+
   try {
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: authHeaders(settings.secret),
-      body: JSON.stringify(body),
-      signal: AbortSignal.timeout(10000),
-    });
-    if (!res.ok) return { error: `HTTP ${res.status}` };
-    return await res.json().catch(() => ({}));
+    apiUrl = normalizeApiUrl(settings.apiUrl);
   } catch (err) {
     return { error: err.message };
   }
+
+  try {
+    const res = await fetch(`${apiUrl}/agentmemory/${endpoint}`, {
+      method,
+      headers: authHeaders(settings.secret),
+      body: body === undefined ? undefined : JSON.stringify(body),
+      signal: AbortSignal.timeout(timeout),
+    });
+    const payload = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      return { error: payload.error || `AgentMemory returned HTTP ${res.status}`, status: res.status };
+    }
+    return payload;
+  } catch (err) {
+    return { error: err.message };
+  }
+}
+
+async function apiPost(endpoint, body) {
+  return apiRequest(endpoint, { body });
+}
+
+async function getQueueCount() {
+  const stored = await chrome.storage.session.get('oamQueueCount');
+  return Number.isInteger(stored.oamQueueCount) ? stored.oamQueueCount : 0;
 }
 
 // ---------------------------------------------------------------------------
@@ -57,24 +82,17 @@ async function apiPost(endpoint, body) {
 // ---------------------------------------------------------------------------
 
 async function updateBadge() {
-  const settings = await getSettings();
-  try {
-    const res = await fetch(`${settings.apiUrl}/agentmemory/search`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query: '_badge_ping', limit: 1 }),
-      signal: AbortSignal.timeout(3000),
-    });
-    _isConnected = res.ok;
-  } catch {
-    _isConnected = false;
-  }
+  const [health, badgeCount] = await Promise.all([
+    apiRequest('health', { method: 'GET', timeout: 3000 }),
+    getQueueCount(),
+  ]);
+  _isConnected = !health.error;
 
   if (!_isConnected) {
     chrome.action.setBadgeText({ text: '!' });
     chrome.action.setBadgeBackgroundColor({ color: '#ef4444' });
-  } else if (_badgeCount > 0) {
-    chrome.action.setBadgeText({ text: String(_badgeCount) });
+  } else if (badgeCount > 0) {
+    chrome.action.setBadgeText({ text: String(badgeCount) });
     chrome.action.setBadgeBackgroundColor({ color: '#6366f1' }); // Indigo for queued items
   } else {
     chrome.action.setBadgeText({ text: '✓' });
@@ -104,7 +122,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             hookType: 'prompt_submit',
             sessionId: message.sessionId || `web_${platform}_${Date.now().toString(36)}`,
             project: `${platform}-web`,
-            cwd: '/home/david',
+            cwd: `browser:${platform}`,
             timestamp: new Date().toISOString(),
             data: { prompt: message.content },
           });
@@ -127,7 +145,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           const result = await apiPost('session/start', {
             sessionId: message.sessionId,
             project: message.project || `${message.platform}-web`,
-            cwd: '/home/david',
+            cwd: `browser:${message.platform || 'unknown'}`,
           });
           sendResponse(result);
           return;
@@ -142,22 +160,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         // -- Status: health check for popup --
         case 'STATUS': {
           const settings = await getSettings();
-          const url = `${settings.apiUrl}/agentmemory/search`;
-          try {
-            const res = await fetch(url, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ query: '_status_ping', limit: 1 }),
-              signal: AbortSignal.timeout(3000),
-            });
-            if (res.ok) {
-              sendResponse({ connected: true, apiUrl: settings.apiUrl });
-            } else {
-              throw new Error('Bad response');
-            }
-          } catch {
-            sendResponse({ connected: false, apiUrl: settings.apiUrl });
-          }
+          const health = await apiRequest('health', { method: 'GET', timeout: 3000 });
+          sendResponse({
+            connected: !health.error,
+            apiUrl: settings.apiUrl,
+            version: health.version,
+            error: health.error,
+          });
           return;
         }
 
@@ -169,22 +178,39 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         }
 
         case 'SET_SETTINGS': {
-          await chrome.storage.local.set(message.settings);
-          sendResponse({ ok: true });
+          const next = {};
+          const incoming = message.settings || {};
+          const booleanKeys = [
+            'geminiAutoSave',
+            'chatgptAutoSave',
+            'claudeAutoSave',
+            'grokAutoSave',
+            'showNotifications',
+          ];
+
+          if ('apiUrl' in incoming) next.apiUrl = normalizeApiUrl(incoming.apiUrl);
+          if ('secret' in incoming) next.secret = String(incoming.secret || '').trim();
+          for (const key of booleanKeys) {
+            if (key in incoming) next[key] = incoming[key] === true;
+          }
+
+          await chrome.storage.local.set(next);
+          sendResponse({ ok: true, settings: next });
           return;
         }
 
         // -- Queue Count (for Badge) --
         case 'SET_QUEUE_COUNT': {
-          _badgeCount = message.count || 0;
-          updateBadge();
+          const count = Math.max(0, Number.parseInt(message.count, 10) || 0);
+          await chrome.storage.session.set({ oamQueueCount: count });
+          await updateBadge();
           sendResponse({ ok: true });
           return;
         }
 
         case 'CONTEXT_SENT': {
-          _badgeCount = 0;
-          updateBadge();
+          await chrome.storage.session.remove('oamQueueCount');
+          await updateBadge();
           sendResponse({ ok: true });
           return;
         }
@@ -201,6 +227,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
 // Check connection on install and periodically
 chrome.runtime.onInstalled.addListener(() => {
+  updateBadge();
+  chrome.alarms.create('statusCheck', { periodInMinutes: 1 });
+});
+
+chrome.runtime.onStartup.addListener(() => {
   updateBadge();
   chrome.alarms.create('statusCheck', { periodInMinutes: 1 });
 });

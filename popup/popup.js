@@ -26,6 +26,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   const grokSave       = document.getElementById('grok-save');
   const showNotifications = document.getElementById('show-notifications');
   const apiUrlInput    = document.getElementById('api-url');
+  const apiSecretInput = document.getElementById('api-secret');
+  const settingsError  = document.getElementById('settings-error');
   const saveSettingsBtn= document.getElementById('save-settings');
   const attachBar      = document.getElementById('attach-bar');
   const attachCount    = document.getElementById('attach-count');
@@ -34,12 +36,19 @@ document.addEventListener('DOMContentLoaded', async () => {
   // ── State ───────────────────────────────────────────────────────────────────
   let selectedItems = new Map(); // id → { title, narrative, facts }
   let attachQueued  = false;
+  let queuedCount   = 0;
 
   // ── Helpers ─────────────────────────────────────────────────────────────────
   function msg(message) {
-    return new Promise(resolve =>
-      chrome.runtime.sendMessage(message, r => resolve(r || {}))
-    );
+    return new Promise((resolve) => {
+      chrome.runtime.sendMessage(message, (response) => {
+        if (chrome.runtime.lastError) {
+          resolve({ error: chrome.runtime.lastError.message });
+          return;
+        }
+        resolve(response || {});
+      });
+    });
   }
 
   function esc(str) {
@@ -48,15 +57,49 @@ document.addEventListener('DOMContentLoaded', async () => {
     return d.innerHTML;
   }
 
+  function dashboardUrl(apiUrl) {
+    try {
+      const url = new URL(apiUrl);
+      url.port = '3113';
+      url.pathname = '/';
+      url.search = '';
+      url.hash = '';
+      return url.toString();
+    } catch {
+      return 'http://localhost:3113/';
+    }
+  }
+
+  function stableId(obs) {
+    const source = [
+      obs.id,
+      obs.sessionId,
+      obs.timestamp,
+      obs.title,
+      obs.subtitle,
+      obs.narrative,
+    ].filter(Boolean).join('|');
+    let hash = 0;
+    for (let i = 0; i < source.length; i++) {
+      hash = ((hash << 5) - hash) + source.charCodeAt(i);
+      hash |= 0;
+    }
+    return `memory-${Math.abs(hash)}`;
+  }
+
   // ── Connection status ────────────────────────────────────────────────────────
   const offlineBanner = document.getElementById('offline-banner');
   const copyCmdBtn = document.getElementById('copy-cmd-btn');
 
   if (copyCmdBtn) {
-    copyCmdBtn.addEventListener('click', () => {
-      navigator.clipboard.writeText('agentmemory');
-      copyCmdBtn.textContent = '✓';
-      setTimeout(() => copyCmdBtn.textContent = '📋', 2000);
+    copyCmdBtn.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText('agentmemory');
+        copyCmdBtn.textContent = '✓';
+      } catch {
+        copyCmdBtn.textContent = '!';
+      }
+      setTimeout(() => { copyCmdBtn.textContent = '📋'; }, 2000);
     });
   }
 
@@ -80,6 +123,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const s = await msg({ type: 'GET_SETTINGS' });
     if (!s) return;
     apiUrlInput.value   = s.apiUrl || 'http://localhost:3111';
+    apiSecretInput.value = s.secret || '';
     geminiSave.checked  = s.geminiAutoSave  !== false;
     chatgptSave.checked = s.chatgptAutoSave !== false;
     claudeSave.checked  = s.claudeAutoSave  !== false;
@@ -87,7 +131,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     showNotifications.checked = s.showNotifications === true;
     const url = apiUrlInput.value;
     apiUrlDisplay.textContent = url.replace(/^https?:\/\//, '');
-    if (dashboardLink) dashboardLink.href = url.replace(/:\d+\/?$/, ':3113/');
+    if (dashboardLink) dashboardLink.href = dashboardUrl(url);
   }
 
   geminiSave.addEventListener('change',  () => msg({ type: 'SET_SETTINGS', settings: { geminiAutoSave:  geminiSave.checked  } }));
@@ -98,11 +142,24 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   saveSettingsBtn.addEventListener('click', async () => {
     const url = apiUrlInput.value.trim().replace(/\/+$/, '');
-    if (!url) return;
-    await msg({ type: 'SET_SETTINGS', settings: { apiUrl: url } });
-    apiUrlDisplay.textContent = url.replace(/^https?:\/\//, '');
-    if (dashboardLink) dashboardLink.href = url.replace(/:\d+\/?$/, ':3113/');
-    
+    settingsError.classList.add('hidden');
+    settingsError.textContent = '';
+
+    const result = await msg({
+      type: 'SET_SETTINGS',
+      settings: { apiUrl: url, secret: apiSecretInput.value },
+    });
+    if (result.error) {
+      settingsError.textContent = result.error;
+      settingsError.classList.remove('hidden');
+      return;
+    }
+
+    const savedUrl = result.settings?.apiUrl || url;
+    apiUrlInput.value = savedUrl;
+    apiUrlDisplay.textContent = savedUrl.replace(/^https?:\/\//, '');
+    if (dashboardLink) dashboardLink.href = dashboardUrl(savedUrl);
+
     saveSettingsBtn.textContent = 'Saved ✓';
     saveSettingsBtn.classList.add('saved');
     setTimeout(() => {
@@ -145,9 +202,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (selectedItems.has(id)) {
       selectedItems.delete(id);
       card.classList.remove('selected');
+      card.setAttribute('aria-checked', 'false');
     } else {
       selectedItems.set(id, obsData);
       card.classList.add('selected');
+      card.setAttribute('aria-checked', 'true');
     }
     // Reset queued state if user changes selection after queueing
     if (attachQueued) {
@@ -178,6 +237,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Update badge count in service worker
     await msg({ type: 'SET_QUEUE_COUNT', count: selectedItems.size });
+    queuedCount = selectedItems.size;
 
     // Update UI to "queued" state
     attachQueued = true;
@@ -192,8 +252,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       queueBanner.classList.add('hidden');
       return;
     }
-    const lineCount = text.split('\n').filter(l => l.trim()).length;
-    queueLabel.textContent = `${selectedItems.size} memor${selectedItems.size === 1 ? 'y' : 'ies'} queued for next prompt`;
+    const count = queuedCount || selectedItems.size;
+    queueLabel.textContent = `${count} memor${count === 1 ? 'y' : 'ies'} queued for next prompt`;
     queueBanner.classList.remove('hidden');
   }
 
@@ -201,6 +261,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     await chrome.storage.session.remove('oamQueuedContext');
     await msg({ type: 'SET_QUEUE_COUNT', count: 0 });
     selectedItems.clear();
+    queuedCount = 0;
     // Deselect all visible cards
     document.querySelectorAll('.result-card.selected').forEach(c => c.classList.remove('selected'));
     attachQueued = false;
@@ -210,8 +271,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Check if something was already queued (e.g. popup re-opened)
   async function initQueueBanner() {
-    const data = await chrome.storage.session.get('oamQueuedContext');
+    const data = await chrome.storage.session.get(['oamQueuedContext', 'oamQueueCount']);
     if (data.oamQueuedContext) {
+      queuedCount = Number.isInteger(data.oamQueueCount) ? data.oamQueueCount : 1;
+      attachQueued = true;
       updateQueueBanner(data.oamQueuedContext);
     }
   }
@@ -219,13 +282,16 @@ document.addEventListener('DOMContentLoaded', async () => {
   // ── Build result card ────────────────────────────────────────────────────────
   function buildCard(item) {
     const obs = item.observation || item;
-    const id  = obs.id || obs.sessionId + (obs.title || '') + Math.random();
+    const id  = stableId(obs);
     const title    = obs.title    || obs.subtitle || 'Memory';
     const snippet  = obs.narrative || (obs.facts || []).slice(0, 2).join('. ') || '';
     const meta     = obs.sessionId || '';
 
     const card = document.createElement('div');
     card.className = 'result-card';
+    card.tabIndex = 0;
+    card.setAttribute('role', 'checkbox');
+    card.setAttribute('aria-checked', 'false');
     card.innerHTML = `
       <div class="card-check">✓</div>
       <div class="card-body">
@@ -236,9 +302,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     `;
 
     // Re-select if this id was already chosen
-    if (selectedItems.has(id)) card.classList.add('selected');
+    if (selectedItems.has(id)) {
+      card.classList.add('selected');
+      card.setAttribute('aria-checked', 'true');
+    }
 
     card.addEventListener('click', () => toggleCard(card, id, obs));
+    card.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        toggleCard(card, id, obs);
+      }
+    });
     return card;
   }
 

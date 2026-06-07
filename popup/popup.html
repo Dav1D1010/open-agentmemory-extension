@@ -1,7 +1,9 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Open AgentMemory</title>
   <link rel="stylesheet" href="popup.css">
 </head>
 <body>
@@ -13,7 +15,7 @@
       </div>
       <div class="header-actions">
         <a id="dashboard-link" href="http://localhost:3111" target="_blank" title="Open AgentMemory Dashboard" class="icon-btn">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <rect x="3" y="3" width="7" height="9" rx="1"></rect>
             <rect x="14" y="3" width="7" height="5" rx="1"></rect>
             <rect x="14" y="12" width="7" height="9" rx="1"></rect>
@@ -35,7 +37,7 @@
     <p>Please start your local AgentMemory daemon in your terminal. You can run the installed app or use npx:</p>
     <div class="code-block">
       <code>agentmemory</code>
-      <button id="copy-cmd-btn" title="Copy to clipboard">📋</button>
+      <button id="copy-cmd-btn" title="Copy to clipboard" aria-label="Copy daemon command">📋</button>
     </div>
   </div>
 
@@ -44,7 +46,7 @@
     <div class="queue-banner-row">
       <span class="queue-icon">📎</span>
       <span id="queue-label">0 memories queued</span>
-      <button id="queue-clear-btn" class="queue-clear-btn" title="Clear queue">✕</button>
+      <button id="queue-clear-btn" class="queue-clear-btn" title="Clear queue" aria-label="Clear queued memories">✕</button>
     </div>
     <p class="queue-hint">Will be sent with your next prompt. Open the AI chat tab and type away.</p>
   </div>
@@ -60,14 +62,14 @@
   <div class="tab-panel active" id="tab-search">
     <div class="search-box">
       <input type="text" id="search-input" placeholder="Search your memories…" autocomplete="off">
-      <button id="search-btn" title="Search">→</button>
+      <button id="search-btn" title="Search" aria-label="Search memories">→</button>
     </div>
     <div id="search-results" class="results-list"></div>
   </div>
 
   <!-- Recent Tab -->
   <div class="tab-panel" id="tab-recent">
-    <p class="hint-text">Most recently saved conversations</p>
+    <p class="hint-text">Recent conversation memories</p>
     <div id="recent-results" class="results-list"></div>
   </div>
 
@@ -105,24 +107,27 @@
       </div>
     </div>
 
-      <div class="settings-group">
-        <h3 class="settings-heading">Misc</h3>
-        <div class="toggle-row">
-          <label class="toggle-label" for="show-notifications" style="cursor: default; text-decoration: none;">Show Save Notifications</label>
-          <label class="switch">
-            <input type="checkbox" id="show-notifications">
-            <span class="slider"></span>
-          </label>
-        </div>
-      </div>
-
-      <div class="settings-group">
-        <h3 class="settings-heading">API</h3>
-        <label class="field-label" for="api-url">AgentMemory URL</label>
-        <input type="text" id="api-url" class="text-input" value="http://localhost:3111">
-        <button id="save-settings" class="btn-save">Save & Reconnect</button>
+    <div class="settings-group">
+      <h3 class="settings-heading">Misc</h3>
+      <div class="toggle-row">
+        <label class="toggle-label static-label" for="show-notifications">Show save notifications</label>
+        <label class="switch">
+          <input type="checkbox" id="show-notifications">
+          <span class="slider"></span>
+        </label>
       </div>
     </div>
+
+    <div class="settings-group">
+      <h3 class="settings-heading">API</h3>
+      <label class="field-label" for="api-url">AgentMemory URL</label>
+      <input type="url" id="api-url" class="text-input" value="http://localhost:3111" spellcheck="false">
+      <label class="field-label" for="api-secret">Bearer secret (optional)</label>
+      <input type="password" id="api-secret" class="text-input" autocomplete="off" placeholder="AGENTMEMORY_SECRET">
+      <p id="settings-error" class="settings-error hidden" role="alert"></p>
+      <button id="save-settings" class="btn-save">Save &amp; Reconnect</button>
+    </div>
+  </div>
 
   <!-- Attach Bar — only shown when items are checked -->
   <div id="attach-bar" class="attach-bar hidden">
