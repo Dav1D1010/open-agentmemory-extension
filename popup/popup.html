@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <!-- Header -->
+  <div class="header">
+    <div class="header-row">
+      <div class="logo">
+        <span class="logo-text">Open AgentMemory</span>
+      </div>
+      <div class="header-actions">
+        <a id="dashboard-link" href="http://localhost:3111" target="_blank" title="Open AgentMemory Dashboard" class="icon-btn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="7" height="9" rx="1"></rect>
+            <rect x="14" y="3" width="7" height="5" rx="1"></rect>
+            <rect x="14" y="12" width="7" height="9" rx="1"></rect>
+            <rect x="3" y="16" width="7" height="5" rx="1"></rect>
+          </svg>
+        </a>
+        <div id="status-badge" class="status-badge">
+          <span class="status-dot"></span>
+          <span id="status-text">Checking…</span>
+        </div>
+      </div>
+    </div>
+    <p class="subtitle" id="api-url-display">localhost:3111</p>
+  </div>
+
+  <!-- Offline Banner -->
+  <div id="offline-banner" class="offline-banner hidden">
+    <h3>Daemon is offline</h3>
+    <p>Please start your local AgentMemory daemon by running:</p>
+    <div class="code-block">
+      <code>npx @agentmemory/agentmemory</code>
+      <button id="copy-cmd-btn" title="Copy to clipboard">📋</button>
+    </div>
+  </div>
+
+  <!-- Queued Context Banner -->
+  <div id="queue-banner" class="queue-banner hidden">
+    <div class="queue-banner-row">
+      <span class="queue-icon">📎</span>
+      <span id="queue-label">0 memories queued</span>
+      <button id="queue-clear-btn" class="queue-clear-btn" title="Clear queue">✕</button>
+    </div>
+    <p class="queue-hint">Will be sent with your next prompt. Open the AI chat tab and type away.</p>
+  </div>
+
+  <!-- Tab Navigation -->
+  <div class="tabs">
+    <button class="tab active" data-tab="search">Search Memory</button>
+    <button class="tab" data-tab="recent">Recent</button>
+    <button class="tab" data-tab="settings">Settings</button>
+  </div>
+
+  <!-- Search Tab -->
+  <div class="tab-panel active" id="tab-search">
+    <div class="search-box">
+      <input type="text" id="search-input" placeholder="Search your memories…" autocomplete="off">
+      <button id="search-btn" title="Search">→</button>
+    </div>
+    <div id="search-results" class="results-list"></div>
+  </div>
+
+  <!-- Recent Tab -->
+  <div class="tab-panel" id="tab-recent">
+    <p class="hint-text">Most recently saved conversations</p>
+    <div id="recent-results" class="results-list"></div>
+  </div>
+
+  <!-- Settings Tab -->
+  <div class="tab-panel" id="tab-settings">
+    <div class="settings-group">
+      <h3 class="settings-heading">Auto-save</h3>
+      <div class="toggle-row">
+        <label class="toggle-label" for="gemini-save">Gemini Web</label>
+        <label class="switch">
+          <input type="checkbox" id="gemini-save" checked>
+          <span class="slider"></span>
+        </label>
+      </div>
+      <div class="toggle-row">
+        <label class="toggle-label" for="chatgpt-save">ChatGPT</label>
+        <label class="switch">
+          <input type="checkbox" id="chatgpt-save" checked>
+          <span class="slider"></span>
+        </label>
+      </div>
+    </div>
+
+    <div class="settings-group">
+      <h3 class="settings-heading">API</h3>
+      <label class="field-label" for="api-url">AgentMemory URL</label>
+      <input type="text" id="api-url" class="text-input" value="http://localhost:3111">
+      <button id="save-settings" class="btn-save">Save & Reconnect</button>
+    </div>
+  </div>
+
+  <!-- Attach Bar — only shown when items are checked -->
+  <div id="attach-bar" class="attach-bar hidden">
+    <span id="attach-count">0 selected</span>
+    <button id="attach-btn" class="btn-attach">📎 Queue for next prompt</button>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
