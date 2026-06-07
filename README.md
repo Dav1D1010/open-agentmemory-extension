@@ -1,26 +1,29 @@
 # 🧠 OpenAgentMemory
 
-**Bridge the gap between Web AI limits and Local Agent Persistence.**
+**Sync your Web AI conversations down to your local coding agents.**
 
 ![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 
-OpenAgentMemory is a sleek, cross-platform browser extension that connects web-based AI coding assistants (like Gemini and ChatGPT) directly to your local file system via the local `agentmemory` daemon.
+OpenAgentMemory is a sleek, cross-platform browser extension that connects web-based AI assistants (like Gemini and ChatGPT) directly to your local file system via the `agentmemory` daemon.
 
-It transparently injects persistent, long-term memory into your chat inputs, giving your web AI the context retention of an autonomous desktop agent.
+While it injects long-term memory into your web chats, its **core superpower is syncing what you discuss in the browser down to your local machine.**
 
-*Note: This extension requires the core **[AgentMemory Daemon](https://github.com/Dav1D1010/agentmemory)** to be running locally.*
+*Note: This extension requires the core **[AgentMemory Daemon](https://github.com/rohitg00/agentmemory)** to be running locally.*
 
 ---
 
 ## ⚡ The Problem & Solution
 
-AI providers currently offer **separate usage limits** for their Web apps and Desktop/API agents. Even if you have a flat-fee subscription for both, maxing out your usage on a desktop agent doesn't impact your web app quota (and vice versa). 
+As developers, we often use different AI tools for different stages of work. You might use Gemini Advanced or ChatGPT in the browser for high-level brainstorming, architecture design, and problem-solving. Then, you switch to your local desktop coding agents (like Claude Code or AI IDEs) to actually implement the code.
 
-To maximize your productivity without hitting limits, it's smart to utilize both platforms. However, web apps lack the deep, persistent repository memory of desktop agents and often quietly truncate your conversation history to save compute.
+**The Problem:**
+These workflows are disjointed. Your local coding agent has no idea what architectural decisions you just finalized in your browser session. You're forced to manually copy-paste context, prompts, and code snippets between the web and your terminal.
 
 **The Solution:**
-**OpenAgentMemory** gives you the best of both worlds. It runs a lightweight local daemon that captures your web conversations and securely stores them. When you start a new web session, the extension pre-pends relevant, compressed memory directly into the UI. You get the rich interface and separate usage limits of web-based LLMs, augmented with the persistence of a local desktop agent.
+**OpenAgentMemory** bridges this gap seamlessly. It runs a lightweight local daemon that captures your web-based LLM conversations in real-time and securely stores them. 
+
+When you ideate in the browser, that knowledge is instantly synced to your local personal memory. When you switch to your desktop coding agent, it can automatically query your `agentmemory` daemon to retrieve the exact context, decisions, and code generated during your web session. It acts as a unified "second brain" for all your AI tools.
 
 ---
 
@@ -41,19 +44,19 @@ npx @agentmemory/agentmemory
 3. Enable **Developer Mode** in the top right corner.
 4. Click **Load unpacked** and select the folder containing this repository.
 
-That's it! Open Gemini or ChatGPT and you'll see OpenAgentMemory silently enhancing your context in the background.
+That's it! Open Gemini or ChatGPT, and you'll see OpenAgentMemory silently syncing your sessions in the background.
 
 ---
 
 ## 🎨 UI & Features
 
-- **Lightweight & Fast:** Synchronous pre-injection intercepts your chat submission *before* the web UI processes it.
-- **Minimalist Popup:** A beautifully designed light-theme popup lets you easily toggle memory on and off.
-- **Offline Banner:** If your daemon stops running, the extension gracefully degrades with an offline banner providing a one-click copyable start command.
+- **Seamless Syncing:** Automatically captures inputs and responses from web interfaces and saves them to your local daemon.
+- **Lightweight & Fast:** Synchronous background execution that doesn't slow down your browsing.
+- **Minimalist Popup:** A beautifully designed light-theme popup lets you quickly toggle memory syncing on and off.
 - **Cross-Platform:** Built on standard web technologies and Node.js. Runs flawlessly on Windows, macOS, and Linux.
 
 ---
 
 ## 🔒 Privacy & Security
 
-Your code and conversation history are never shared. Everything is processed locally between your browser and the Node.js daemon running securely on `localhost:3111`.
+Your code and conversation history never touch our servers. Everything is processed entirely locally between your browser and the Node.js daemon running securely on your machine.
