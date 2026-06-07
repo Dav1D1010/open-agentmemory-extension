@@ -15,7 +15,7 @@ It transparently injects persistent, long-term memory into your chat inputs, giv
 
 ## ⚡ The Problem & Solution
 
-AI providers currently enforce **separate usage limits** for their Web apps and Desktop/API agents. Even if you have a flat-fee subscription for both, maxing out your usage on a desktop agent doesn't impact your web app quota (and vice versa). 
+AI providers currently offer **separate usage limits** for their Web apps and Desktop/API agents. Even if you have a flat-fee subscription for both, maxing out your usage on a desktop agent doesn't impact your web app quota (and vice versa). 
 
 To maximize your productivity without hitting limits, it's smart to utilize both platforms. However, web apps lack the deep, persistent repository memory of desktop agents and often quietly truncate your conversation history to save compute.
 
