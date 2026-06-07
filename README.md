@@ -1,39 +1,32 @@
 # 🧠 OpenAgentMemory
 
-**Bridge the gap between Web UI limits and Local Agent Persistence.**
+**Bridge the gap between Web AI limits and Local Agent Persistence.**
 
 ![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 
-OpenAgentMemory is a sleek, cross-platform browser extension that connects web-based AI coding assistants (like Gemini and ChatGPT) directly to your local file system via the `@agentmemory/agentmemory` daemon.
+OpenAgentMemory is a sleek, cross-platform browser extension that connects web-based AI coding assistants (like Gemini and ChatGPT) directly to your local file system via the local `agentmemory` daemon.
 
 It transparently injects persistent, long-term memory into your chat inputs, giving your web AI the context retention of an autonomous desktop agent.
 
+*Note: This extension requires the core **[AgentMemory Daemon](https://github.com/Dav1D1010/agentmemory)** to be running locally.*
+
 ---
 
-## ⚡ The Problem: Web Apps vs. Desktop Agents
+## ⚡ The Problem & Solution
 
-The landscape of AI coding tools is split, forcing developers to make a difficult trade-off:
+AI providers currently enforce **separate usage limits** for their Web apps and Desktop/API agents. Even if you have a flat-fee subscription for both, maxing out your usage on a desktop agent doesn't impact your web app quota (and vice versa). 
 
-### 1. Web-Based Apps (ChatGPT, Gemini Advanced)
-- **The Pros:** Predictable, flat-fee subscription pricing ($20/mo) and an intuitive, rich chat UI.
-- **The Cons:** Aggressive "forgetting" algorithms. To save on compute costs and stay within budget, web providers quietly truncate your interaction history or dynamically summarize context. You frequently lose context on complex, long-running projects.
+To maximize your productivity without hitting limits, it's smart to utilize both platforms. However, web apps lack the deep, persistent repository memory of desktop agents and often quietly truncate your conversation history to save compute.
 
-### 2. Desktop & CLI Agents (Claude Code, etc.)
-- **The Pros:** Deep integration with your local repository. They gather "surgical" context natively and don't aggressively drop history.
-- **The Cons:** They operate on a Bring-Your-Own-API-Key model. Every time a CLI agent re-reads your codebase to regain context, you pay for the raw token consumption. A single complex task can rack up significant API costs fast.
-
-## 💡 The Solution: Best of Both Worlds
-
-**OpenAgentMemory** gives you the rich UI and flat-fee pricing of web-based LLMs while injecting the persistence and "surgical" repository context of a desktop agent. 
-
-By running a lightweight local daemon, the extension dynamically captures your conversations and securely stores them. When you start a new session, the extension pre-pends relevant, compressed memory directly into the web UI—ensuring the AI *never* forgets your project's history, architecture, or previous decisions.
+**The Solution:**
+**OpenAgentMemory** gives you the best of both worlds. It runs a lightweight local daemon that captures your web conversations and securely stores them. When you start a new web session, the extension pre-pends relevant, compressed memory directly into the UI. You get the rich interface and separate usage limits of web-based LLMs, augmented with the persistence of a local desktop agent.
 
 ---
 
 ## 🚀 Installation & Setup
 
-Because OpenAgentMemory relies on a local daemon, setup requires two quick steps:
+Setup requires two quick steps:
 
 ### 1. Start the Local Daemon
 Ensure you have [Node.js](https://nodejs.org/) installed, then run the daemon in your terminal:
@@ -64,7 +57,3 @@ That's it! Open Gemini or ChatGPT and you'll see OpenAgentMemory silently enhanc
 ## 🔒 Privacy & Security
 
 Your code and conversation history never touch our servers. Everything is processed locally between your browser and the Node.js daemon running securely on `localhost:3111`.
-
----
-
-*Built for power users who demand endless memory without endless API bills.*
